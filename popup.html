@@ -3,6 +3,7 @@
 <head>
     <title>Eco-Sense Insights</title>
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap');
         body {
             font-family: 'Inter', sans-serif;
             width: 380px; /* Wider for more content */
@@ -19,7 +20,7 @@
             font-size: 1.4em;
             text-align: center;
         }
-        .loading-state, .error-state, .not-ecommerce-state { /* Added not-ecommerce-state */
+        .loading-state, .error-state, .not-ecommerce-state, .no-product-state { /* Added no-product-state */
             text-align: center;
             padding: 30px;
             color: #666;
@@ -40,7 +41,7 @@
         .error-message {
             color: #D32F2F;
         }
-        .not-ecommerce-message { /* Specific style for non-ecommerce message */
+        .info-message { /* For non-ecommerce domain or no product */
             color: #2196F3;
         }
 
@@ -65,6 +66,21 @@
             line-height: 1.5;
             color: #555;
             margin-bottom: 5px;
+        }
+        .eco-sense-product-info {
+            text-align: center;
+            margin-bottom: 15px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #eee;
+        }
+        .eco-sense-product-info h3 {
+            font-size: 1.5em;
+            color: #2c3e50;
+            margin-bottom: 5px;
+        }
+        .eco-sense-product-info p {
+            font-size: 1em;
+            color: #7f8c8d;
         }
         .eco-sense-overall-score h3 {
             text-align: center;
@@ -91,12 +107,12 @@
             margin-bottom: 5px;
             color: #444;
         }
-        .eco-sense-alternatives ul {
+        .eco-sense-alternatives ul, .eco-sense-links ul {
             list-style: none;
             padding: 0;
             margin: 10px 0 0;
         }
-        .eco-sense-alternatives li {
+        .eco-sense-alternatives li, .eco-sense-links li {
             background-color: #f0f8ff;
             border: 1px solid #d0e8ff;
             padding: 10px;
@@ -105,11 +121,19 @@
             font-size: 0.9em;
             line-height: 1.4;
         }
-        .eco-sense-alternatives li:last-child {
+        .eco-sense-alternatives li:last-child, .eco-sense-links li:last-child {
             margin-bottom: 0;
         }
         .eco-sense-alternatives li strong {
             color: #2196F3;
+        }
+        .eco-sense-links li a {
+            color: #3498db;
+            text-decoration: none;
+            font-weight: bold;
+        }
+        .eco-sense-links li a:hover {
+            text-decoration: underline;
         }
         .hidden {
             display: none !important;
@@ -121,11 +145,16 @@
 
     <div id="loading" class="loading-state">
         <div class="spinner"></div>
-        <p>Analyzing product sustainability...</p>
+        <p>Analyzing page content...</p>
     </div>
 
-    <div id="notEcommerce" class="not-ecommerce-state hidden">
-        <p class="not-ecommerce-message">This does not appear to be an e-commerce product page. <br>Browse to a product page to get sustainability insights.</p>
+    <div id="notEcommerceDomain" class="not-ecommerce-state hidden">
+        <p class="info-message">This does not appear to be an approved e-commerce website for analysis. <br>Please visit a site from our supported list.</p>
+    </div>
+
+    <div id="noMainProduct" class="no-product-state hidden">
+        <p class="info-message">No specific product found on this page. <br>Please navigate to a product detail page.</p>
+        <p id="noProductMessage" class="info-message"></p>
     </div>
 
     <div id="error" class="error-state hidden">
@@ -135,8 +164,7 @@
     </div>
 
     <div id="results" class="hidden">
-        <!-- Sustainability data will be injected here by popup.js -->
-    </div>
+        </div>
 
     <script src="popup.js"></script>
 </body>
