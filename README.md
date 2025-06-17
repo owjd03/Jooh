@@ -4,6 +4,7 @@ we are team Joohfeed for lifehack 2025
 Usage:
 ```
 python -m venv .venv
+.venv\Scripts\activate
 
 pip install -r requirements.txt
 
