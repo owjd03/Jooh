@@ -9,16 +9,49 @@
     "storage"
   ],
   "host_permissions": [
-    "<all_urls>",
-    "http://127.0.0.1:5000/"
+    "http://127.0.0.1:5000/",
+    "https://www.amazon.com/*",
+    "https://www.amazon.sg/*",
+    "https://www.ebay.com/*",
+    "https://www.walmart.com/*",
+    "https://www.target.com/*",
+    "https://www.etsy.com/*",
+    "https://www.nike.com/*",
+    "https://www.adidas.com/*",
+    "https://www.bestbuy.com/*",
+    "https://www.zara.com/*",
+    "https://www.hm.com/*",
+    "https://www.shein.com/*",
+    "https://www.aliexpress.com/*",
+    "https://*.shopify.com/*",
+    "https://shopee.sg/*",
+    "https://www.lazada.sg/*"
   ],
   "background": {
     "service_worker": "background.js"
   },
   "content_scripts": [
     {
-      "matches": ["<all_urls>"],
-      "js": ["ecommerceSites.js", "content.js"]
+      "matches": [
+        "https://www.amazon.com/*",
+        "https://www.amazon.sg/*",
+        "https://www.ebay.com/*",
+        "https://www.walmart.com/*",
+        "https://www.target.com/*",
+        "https://www.etsy.com/*",
+        "https://www.nike.com/*",
+        "https://www.adidas.com/*",
+        "https://www.bestbuy.com/*",
+        "https://www.zara.com/*",
+        "https://www.hm.com/*",
+        "https://www.shein.com/*",
+        "https://www.aliexpress.com/*",
+        "https://*.shopify.com/*",
+        "https://shopee.sg/*",
+        "https://www.lazada.sg/*"
+      ],
+      "js": ["content.js"],
+      "css": ["styles.css"]
     }
   ],
   "icons": {
@@ -27,11 +60,16 @@
     "128": "icon.png"
   },
   "action": {
-    "default_popup": "popup.html"
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "icon.png",
+      "48": "icon.png",
+      "128": "icon.png"
+    }
   },
   "web_accessible_resources": [
     {
-      "resources": [],
+      "resources": ["styles.css", "icon.png"],
       "matches": ["<all_urls>"]
     }
   ]

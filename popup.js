@@ -1,87 +1,104 @@
 // popup.js
 // This script runs when the extension popup is opened and displays sustainability data.
+// It uses chrome.storage.onChanged to react to real-time status updates from the background script.
 
-document.addEventListener('DOMContentLoaded', async () => {
-    const loadingDiv = document.getElementById('loading');
-    const errorDiv = document.getElementById('error');
-    const errorMessageSpan = document.getElementById('errorMessage');
-    const resultsDiv = document.getElementById('results');
-    const notEcommerceDomainDiv = document.getElementById('notEcommerceDomain');
-    const noMainProductDiv = document.getElementById('noMainProduct');
-    const noProductMessageSpan = document.getElementById('noProductMessage');
+// --- Diagnostic Check (kept from your last version) ---
+if (typeof document === 'undefined') {
+    console.error("CRITICAL ERROR: 'document' is not defined. This script is running in an unexpected environment (e.g., a service worker).");
+    throw new Error("'document' object not found. Script cannot proceed.");
+}
+// --- End Diagnostic Check ---
 
-    // Show loading state initially
-    hideAllSections();
-    loadingDiv.classList.remove('hidden');
 
+// Get references to all main display sections from popup.html
+const loadingDiv = document.getElementById('loading');
+const errorDiv = document.getElementById('error');
+const errorMessageSpan = document.getElementById('errorMessage');
+const resultsDiv = document.getElementById('results');
+const notEcommerceDomainDiv = document.getElementById('notEcommerceDomain');
+const noMainProductDiv = document.getElementById('noMainProduct');
+const noProductMessageSpan = document.getElementById('noProductMessage');
+const initialWelcomeMessageDiv = document.getElementById('initial-welcome-message');
+
+// Elements within the resultsDiv that will display product info
+const productTitleDisplay = document.getElementById('productTitleDisplay');
+const brandNameDisplay = document.getElementById('brandNameDisplay');
+const sustainabilityResultsDisplay = document.getElementById('sustainabilityResultsDisplay');
+
+
+// Helper to hide all main display sections/messages
+function hideAllSections() {
+    loadingDiv.classList.add('hidden');
+    errorDiv.classList.add('hidden');
+    resultsDiv.classList.add('hidden');
+    notEcommerceDomainDiv.classList.add('hidden');
+    noMainProductDiv.classList.add('hidden');
+    initialWelcomeMessageDiv.classList.add('hidden'); // Also hide the welcome message
+}
+
+/**
+ * Renders the popup UI based on the current data from storage.
+ * This function will be called on DOMContentLoaded and whenever storage changes.
+ */
+async function renderPopupUI() {
     try {
         // Retrieve data from chrome.storage.local
         const storedData = await chrome.storage.local.get([
-            'sustainabilityData',
-            'analysisStatus',
-            'errorMessage',
-            'hasMainProduct', // New flag
-            'productTitle', // New
-            'brandName',    // New
-            'justifyingLinks', // New
-            'alternativeProducts' // New
+            'analysisStatus',     // 'loading', 'success', 'error', 'not-ecommerce-domain', 'no-main-product'
+            'errorMessage',       // Any error message from analysis
+            'hasMainProduct',     // Boolean indicating if a product was found
+            'productTitle',       // Product title
+            'brandName',          // Brand name
+            'sustainabilityData', // Main sustainability object (scores, explanations)
+            'justifyingLinks',    // Array of links
+            'alternativeProducts' // Array of alternatives
         ]);
-        console.log("Popup: Retrieved data from storage:", storedData);
+        console.log("Popup: Re-rendering UI. Current stored data:", storedData);
 
-        if (storedData.analysisStatus === 'not-ecommerce-domain') {
-            hideAllSections();
+        hideAllSections(); // Start by hiding everything
+
+        // Determine which section to show based on analysisStatus
+        if (storedData.analysisStatus === 'loading') {
+            loadingDiv.classList.remove('hidden');
+            loadingDiv.querySelector('p').textContent = "Analyzing page content. This might take a moment...";
+            loadingDiv.querySelector('.spinner').classList.remove('hidden'); // Ensure spinner is visible
+        } else if (storedData.analysisStatus === 'not-ecommerce-domain') {
             notEcommerceDomainDiv.classList.remove('hidden');
         } else if (storedData.analysisStatus === 'no-main-product') {
-            hideAllSections();
             noMainProductDiv.classList.remove('hidden');
             noProductMessageSpan.textContent = storedData.errorMessage || "The page you are on does not contain a specific product to analyze.";
-        } else if (storedData.analysisStatus === 'success' && storedData.hasMainProduct && storedData.sustainabilityData) {
-            hideAllSections();
-            displaySustainabilityResults(storedData); // Pass all storedData for comprehensive display
-            resultsDiv.classList.remove('hidden');
         } else if (storedData.analysisStatus === 'error') {
-            hideAllSections();
-            errorMessageSpan.textContent = storedData.errorMessage || "An unknown error occurred.";
             errorDiv.classList.remove('hidden');
+            errorMessageSpan.textContent = storedData.errorMessage || "An unknown error occurred.";
+        } else if (storedData.analysisStatus === 'success' && storedData.hasMainProduct && storedData.sustainabilityData) {
+            resultsDiv.classList.remove('hidden'); // Show the results container
+            displaySustainabilityResults(storedData); // Populate the results container with all data
         } else {
-            // Default state: still loading, or no data yet
-            // Keep loading spinner or show a general informational message
-            hideAllSections();
-            loadingDiv.classList.remove('hidden');
-            // If loading after a very brief check, provide more context
-            if (storedData.analysisStatus === 'loading') {
-                loadingDiv.querySelector('p').textContent = "Analyzing page content. This might take a moment...";
-            } else {
-                 loadingDiv.querySelector('p').textContent = "No analysis initiated yet. Browse to an approved e-commerce product page to start.";
-                 // Optionally hide spinner if no analysis is actually running
-                 loadingDiv.querySelector('.spinner').classList.add('hidden');
-            }
+            // Default or uninitialized state: show the welcome message
+            initialWelcomeMessageDiv.classList.remove('hidden');
         }
+
     } catch (error) {
-        console.error("Popup: Error retrieving data from storage:", error);
+        console.error("Popup: Error retrieving or rendering data:", error);
         hideAllSections();
-        errorMessageSpan.textContent = `Failed to load data: ${error.message}`;
+        errorMessageSpan.textContent = `Failed to load popup data: ${error.message}`;
         errorDiv.classList.remove('hidden');
     }
-});
-
-function hideAllSections() {
-    document.getElementById('loading').classList.add('hidden');
-    document.getElementById('error').classList.add('hidden');
-    document.getElementById('results').classList.add('hidden');
-    document.getElementById('notEcommerceDomain').classList.add('hidden');
-    document.getElementById('noMainProduct').classList.add('hidden');
 }
-
 
 /**
  * Displays the sustainability results in the popup UI.
+ * This function now expects the entire `data` object from storage directly.
  * @param {Object} data - The comprehensive data from storage including product info, scores, links, alternatives.
  */
 function displaySustainabilityResults(data) {
-    const resultsDiv = document.getElementById('results');
-    resultsDiv.innerHTML = ''; // Clear previous content
+    // Populate product title and brand
+    productTitleDisplay.textContent = data.productTitle || 'Product Name Not Available';
+    brandNameDisplay.textContent = data.brandName ? `by ${data.brandName}` : '';
 
+    sustainabilityResultsDisplay.innerHTML = ''; // Clear previous content
+
+    // Note: Scores are 0-10 as per your working app.py's required structure and scaling
     const scoreColor = (score) => {
         if (score >= 8) return '#4CAF50'; // Green (Excellent)
         if (score >= 6) return '#8BC34A'; // Light Green (Good)
@@ -90,16 +107,8 @@ function displaySustainabilityResults(data) {
         return '#F44336'; // Red (Very Poor)
     };
 
-    // Product Name and Brand
-    resultsDiv.innerHTML += `
-        <div class="eco-sense-product-info">
-            <h3>${data.productTitle || 'Product Name'}</h3>
-            <p>${data.brandName ? `by ${data.brandName}` : ''}</p>
-        </div>
-    `;
-
     // Overall Score
-    resultsDiv.innerHTML += `
+    sustainabilityResultsDisplay.innerHTML += `
         <div class="eco-sense-section eco-sense-overall-score">
             <h3>Overall Sustainability Score: <span style="color: ${scoreColor(data.sustainabilityData.overallScore)};">${data.sustainabilityData.overallScore}/10</span></h3>
             <p>${data.sustainabilityData.overallExplanation}</p>
@@ -107,7 +116,7 @@ function displaySustainabilityResults(data) {
     `;
 
     // Pillar Scores
-    resultsDiv.innerHTML += `
+    sustainabilityResultsDisplay.innerHTML += `
         <div class="eco-sense-section">
             <h4>Detailed Impact Breakdown:</h4>
             <div class="eco-sense-pillars-grid">
@@ -124,7 +133,7 @@ function displaySustainabilityResults(data) {
 
     // Justifying Links
     if (data.justifyingLinks && data.justifyingLinks.length > 0) {
-        resultsDiv.innerHTML += `
+        sustainabilityResultsDisplay.innerHTML += `
             <div class="eco-sense-section eco-sense-links">
                 <h4>Learn More:</h4>
                 <ul>
@@ -140,7 +149,7 @@ function displaySustainabilityResults(data) {
 
     // Alternative Products
     if (data.alternativeProducts && data.alternativeProducts.length > 0) {
-        resultsDiv.innerHTML += `
+        sustainabilityResultsDisplay.innerHTML += `
             <div class="eco-sense-section eco-sense-alternatives">
                 <h4>Sustainable Alternatives:</h4>
                 <ul>
@@ -154,10 +163,10 @@ function displaySustainabilityResults(data) {
             </div>
         `;
     } else {
-        resultsDiv.innerHTML += `
+        sustainabilityResultsDisplay.innerHTML += `
             <div class="eco-sense-section eco-sense-alternatives">
                 <h4>Sustainable Alternatives:</h4>
-                <p>No specific alternatives suggested at this time. Please check back later or research similar products.</p>
+                <p>No specific alternatives suggested at this time.</p>
             </div>
         `;
     }
@@ -171,3 +180,24 @@ function displaySustainabilityResults(data) {
 function formatPillarName(name) {
     return name.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase());
 }
+
+// Initial render when the popup DOM is loaded
+document.addEventListener('DOMContentLoaded', renderPopupUI);
+
+// Listen for changes in chrome.storage.local and re-render the UI
+chrome.storage.onChanged.addListener((changes, areaName) => {
+    // Check if any relevant keys for the popup's display have changed
+    if (areaName === 'local' && (
+        changes.analysisStatus ||
+        changes.errorMessage ||
+        changes.hasMainProduct ||
+        changes.productTitle ||
+        changes.brandName ||
+        changes.sustainabilityData || // Check for changes to the main data object
+        changes.justifyingLinks ||
+        changes.alternativeProducts
+    )) {
+        console.log("Popup: Storage changed, re-rendering UI.");
+        renderPopupUI();
+    }
+});

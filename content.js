@@ -1,32 +1,39 @@
 // content.js
-// This script runs on every web page.
-// It checks if the current domain is a whitelisted e-commerce site.
-// If it is, it sends the full page HTML and URL to the background script for analysis by LLM.
+// This script runs only on pages matched by manifest.json (i.e., approved e-commerce sites).
+// It sends the full page HTML and URL to the background script for analysis by LLM.
+// It also displays an on-page toast notification to provide real-time status.
 
 console.log("Eco-Sense Shopping Companion: Content script loaded.");
 
-// Ensure ECOMMERCE_DOMAINS is available from ecommerceSites.js
-// If ecommerceSites.js is loaded before content.js in manifest.json, ECOMMERCE_DOMAINS will be global.
-// If not, you might need to structure it as an import or directly include its content.
-// For this setup, we assume it's loaded as a global variable.
-if (typeof ECOMMERCE_DOMAINS === 'undefined') {
-    console.error("E-commerce domains list not found. Ensure ecommerceSites.js is loaded before content.js in manifest.json.");
-    // Fallback or exit if list isn't available
-    const ECOMMERCE_DOMAINS = [
-        "amazon.com", "ebay.com", "walmart.com", "target.com" // Minimal fallback
-    ];
+let ecoSenseToast = null; // Variable to hold our toast element
+
+// Function to create or update the on-page toast notification
+function showEcoSenseToast(message, type = 'info') {
+    if (!ecoSenseToast) {
+        ecoSenseToast = document.createElement('div');
+        ecoSenseToast.id = 'eco-sense-toast';
+        document.body.appendChild(ecoSenseToast);
+    }
+
+    ecoSenseToast.textContent = message;
+    ecoSenseToast.className = 'eco-sense-toast eco-sense-toast-' + type; // Apply type class for styling
+
+    // Make sure it's visible
+    ecoSenseToast.classList.remove('eco-sense-toast-hidden');
+
+    // Hide after a few seconds if it's not a loading message
+    if (type !== 'loading') {
+        clearTimeout(ecoSenseToast.hideTimer);
+        ecoSenseToast.hideTimer = setTimeout(() => {
+            ecoSenseToast.classList.add('eco-sense-toast-hidden');
+        }, 5000); // Hide after 5 seconds
+    }
 }
 
-
-// Function to check if the current domain is in our hardcoded e-commerce list
-function isEcommerceDomain(url) {
-    try {
-        const hostname = new URL(url).hostname;
-        // Check both exact match and subdomain match (e.g., store.shopify.com matches shopify.com)
-        return ECOMMERCE_DOMAINS.some(domain => hostname === domain || hostname.endsWith(`.${domain}`));
-    } catch (e) {
-        console.error("Error parsing URL for domain check:", e);
-        return false;
+function hideEcoSenseToast() {
+    if (ecoSenseToast) {
+        ecoSenseToast.classList.add('eco-sense-toast-hidden');
+        clearTimeout(ecoSenseToast.hideTimer);
     }
 }
 
@@ -34,24 +41,22 @@ function isEcommerceDomain(url) {
 async function initiatePageAnalysis() {
     const productUrl = window.location.href;
 
-    if (!isEcommerceDomain(productUrl)) {
-        console.log("Content: Not an approved e-commerce domain. Skipping analysis.");
-        // If not an e-commerce page, clear previous analysis data and set status for popup
-        await chrome.storage.local.set({
-            analysisStatus: 'not-ecommerce-domain', // New status for popup
-            sustainabilityData: null,
-            errorMessage: "Not Browse an approved e-commerce website for analysis.",
-            hasMainProduct: false // Ensure this is false
-        });
-        return;
-    }
+    // Set initial loading state in storage for the popup to reflect immediately
+    await chrome.storage.local.set({
+        analysisStatus: 'loading', // Using your existing key
+        sustainabilityData: null, // Clear previous product data to show loading for current analysis
+        errorMessage: null,
+        hasMainProduct: null,
+        productTitle: null,
+        brandName: null,
+        justifyingLinks: null,
+        alternativeProducts: null
+    });
+    showEcoSenseToast('Eco-Sense: Analyzing...', 'loading'); // Show toast on the page
 
-    // Capture the entire HTML of the page
-    // This can be very large and might exceed message limits for extremely complex pages.
-    // Consider sending only relevant sections or a summary in a production environment.
     const fullHtmlContent = document.documentElement.outerHTML;
 
-    console.log("Content: Approved e-commerce domain. Sending URL and HTML to background script.");
+    console.log("Content: Approved e-commerce domain (via manifest.json). Sending URL and HTML to background script.");
     try {
         // Send message to background script for full page content analysis
         await chrome.runtime.sendMessage({
@@ -60,22 +65,31 @@ async function initiatePageAnalysis() {
             htmlContent: fullHtmlContent
         });
         console.log("Content: Page content analysis request sent for URL:", productUrl);
-        // Set initial loading state for popup
-        await chrome.storage.local.set({
-            analysisStatus: 'loading',
-            sustainabilityData: null,
-            errorMessage: null,
-            hasMainProduct: null // Reset this
-        });
+        // Background script will update storage, and storage.onChanged will handle popup updates.
+        // Toast updates will also come from background.js.
     } catch (error) {
         console.error("Content: Error sending message to background script:", error);
+        // Set error status in storage for popup
         await chrome.storage.local.set({
             analysisStatus: 'error',
-            errorMessage: `Failed to send page data for analysis: ${error.message}`,
-            hasMainProduct: false
+            errorMessage: `Failed to send page data for analysis: ${error.message}`
         });
+        showEcoSenseToast('Eco-Sense: Error sending data.', 'error');
     }
 }
+
+// Listen for messages from the background script to update the toast
+chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+    if (request.action === "updateToast") {
+        console.log("Content: Received toast update:", request.status, request.message);
+        if (request.status === 'hide') {
+            hideEcoSenseToast();
+        } else {
+            showEcoSenseToast(request.message, request.status);
+        }
+    }
+    return true; // Keep the message channel open
+});
 
 // Initiate page analysis when the DOM is ready or immediately if already ready
 if (document.readyState === 'loading') {

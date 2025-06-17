@@ -1,0 +1,42 @@
+/* styles.css */
+/* Styles for the on-page toast notification */
+
+#eco-sense-toast {
+    font-family: 'Inter', sans-serif;
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: #333;
+    color: white;
+    padding: 10px 20px;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    z-index: 99999; /* Ensure it's on top */
+    opacity: 1;
+    transition: opacity 0.3s ease-in-out, transform 0.3s ease-in-out;
+    white-space: nowrap; /* Prevent wrapping */
+}
+
+#eco-sense-toast.eco-sense-toast-hidden {
+    opacity: 0;
+    pointer-events: none; /* Disable interactions when hidden */
+    transform: translateX(-50%) translateY(20px); /* Slide down when hiding */
+}
+
+/* Specific styles for different toast types */
+.eco-sense-toast-loading {
+    background-color: #007bff; /* Blue for loading */
+}
+
+.eco-sense-toast-success {
+    background-color: #4CAF50; /* Green for success */
+}
+
+.eco-sense-toast-error {
+    background-color: #F44336; /* Red for error */
+}
+
+.eco-sense-toast-info {
+    background-color: #2196F3; /* Blue for general info/not-ecommerce */
+}

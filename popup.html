@@ -20,7 +20,7 @@
             font-size: 1.4em;
             text-align: center;
         }
-        .loading-state, .error-state, .not-ecommerce-state, .no-product-state { /* Added no-product-state */
+        .loading-state, .error-state, .info-state {
             text-align: center;
             padding: 30px;
             color: #666;
@@ -41,7 +41,7 @@
         .error-message {
             color: #D32F2F;
         }
-        .info-message { /* For non-ecommerce domain or no product */
+        .info-message {
             color: #2196F3;
         }
 
@@ -92,7 +92,7 @@
         }
         .eco-sense-pillars-grid {
             display: grid;
-            grid-template-columns: 1fr; /* Single column in popup for space */
+            grid-template-columns: 1fr;
             gap: 15px;
             margin-top: 10px;
         }
@@ -143,28 +143,44 @@
 <body>
     <h2>Eco-Sense Insights</h2>
 
-    <div id="loading" class="loading-state">
-        <div class="spinner"></div>
-        <p>Analyzing page content...</p>
-    </div>
+    <div id="main-content-display">
+        <!-- All dynamic content will be rendered into one of these -->
 
-    <div id="notEcommerceDomain" class="not-ecommerce-state hidden">
-        <p class="info-message">This does not appear to be an approved e-commerce website for analysis. <br>Please visit a site from our supported list.</p>
-    </div>
-
-    <div id="noMainProduct" class="no-product-state hidden">
-        <p class="info-message">No specific product found on this page. <br>Please navigate to a product detail page.</p>
-        <p id="noProductMessage" class="info-message"></p>
-    </div>
-
-    <div id="error" class="error-state hidden">
-        <p>Could not retrieve sustainability insights.</p>
-        <p id="errorMessage" class="error-message"></p>
-        <p>Please ensure your Flask backend server is running and try again.</p>
-    </div>
-
-    <div id="results" class="hidden">
+        <div id="loading" class="loading-state hidden">
+            <div class="spinner"></div>
+            <p>Analyzing page content...</p>
         </div>
+
+        <div id="notEcommerceDomain" class="info-state hidden">
+            <p class="info-message">This is not an approved e-commerce website for analysis. <br>Please visit a site from our supported list.</p>
+        </div>
+
+        <div id="noMainProduct" class="info-state hidden">
+            <p class="info-message">No specific product found on this page. <br>Please navigate to a product detail page.</p>
+            <p id="noProductMessage" class="info-message"></p>
+        </div>
+
+        <div id="error" class="error-state hidden">
+            <p>Could not retrieve sustainability insights.</p>
+            <p id="errorMessage" class="error-message"></p>
+            <p>Please ensure your Flask backend server is running and try again.</p>
+        </div>
+
+        <div id="results" class="hidden">
+            <!-- These IDs are needed by popup.js to insert product details directly -->
+            <div class="eco-sense-product-info">
+                <h3 id="productTitleDisplay"></h3>
+                <p id="brandNameDisplay"></p>
+            </div>
+            <!-- Sustainability results will be injected here by displaySustainabilityResults -->
+            <div id="sustainabilityResultsDisplay"></div>
+        </div>
+
+        <div id="initial-welcome-message" class="info-state hidden">
+            <p class="info-message">Welcome to Eco-Sense! Navigate to an approved e-commerce product page to get started.</p>
+        </div>
+
+    </div>
 
     <script src="popup.js"></script>
 </body>
