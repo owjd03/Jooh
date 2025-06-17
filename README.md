@@ -7,7 +7,7 @@ python -m venv .venv
 
 pip install -r requirements.txt
 
-python3 app.py
+python app.py
 ```
 
 add `GEMINI_API_KEY=<YOUR_API_KEY>` in .env file in the root directory.
