@@ -112,10 +112,10 @@ function getScoreInfo(score) {
         phrase = "Planet's Best Friend!";
         className = "meter-fill-green";
     } else if (score >= 7) {
-        phrase = "Gentle on the Earth";
+        phrase = "Eco-Conscious Choice";
         className = "meter-fill-light-green";
     } else if (score >= 5) {
-        phrase = "Eco-Conscious Choice";
+        phrase = "Middle Ground Impact";
         className = "meter-fill-yellow";
         textClassName = "text-dark"; // For better contrast on yellow
     } else if (score >= 3) {
