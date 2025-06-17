@@ -1,7 +1,8 @@
 // content.js
 // This script runs only on pages matched by manifest.json (i.e., approved e-commerce sites).
 // It sends the full page HTML and URL to the background script for analysis by LLM.
-// It also displays an on-page toast notification to provide real-time status.
+// It also displays an on-page toast notification to provide real-time status,
+// respecting the extension's enabled/disabled state.
 
 console.log("Eco-Sense Shopping Companion: Content script loaded.");
 
@@ -41,10 +42,25 @@ function hideEcoSenseToast() {
 async function initiatePageAnalysis() {
     const productUrl = window.location.href;
 
+    // Check if the extension is enabled
+    const storage = await chrome.storage.local.get('extensionEnabled');
+    const isEnabled = storage.extensionEnabled !== false; // Default to true if not set
+
+    if (!isEnabled) {
+        console.log("Content: Extension is currently disabled. Skipping analysis.");
+        showEcoSenseToast('Eco-Sense: Extension is OFF.', 'info');
+        // Clear status in storage to prevent showing old loading/error states in popup
+        await chrome.storage.local.set({
+            analysisStatus: 'disabled', // New status for popup
+            errorMessage: "Extension is temporarily off."
+        });
+        return;
+    }
+
     // Set initial loading state in storage for the popup to reflect immediately
     await chrome.storage.local.set({
-        analysisStatus: 'loading', // Using your existing key
-        sustainabilityData: null, // Clear previous product data to show loading for current analysis
+        analysisStatus: 'loading',
+        sustainabilityData: null,
         errorMessage: null,
         hasMainProduct: null,
         productTitle: null,
@@ -56,7 +72,7 @@ async function initiatePageAnalysis() {
 
     const fullHtmlContent = document.documentElement.outerHTML;
 
-    console.log("Content: Approved e-commerce domain (via manifest.json). Sending URL and HTML to background script.");
+    console.log("Content: Approved e-commerce domain. Sending URL and HTML to background script.");
     try {
         // Send message to background script for full page content analysis
         await chrome.runtime.sendMessage({
@@ -65,8 +81,6 @@ async function initiatePageAnalysis() {
             htmlContent: fullHtmlContent
         });
         console.log("Content: Page content analysis request sent for URL:", productUrl);
-        // Background script will update storage, and storage.onChanged will handle popup updates.
-        // Toast updates will also come from background.js.
     } catch (error) {
         console.error("Content: Error sending message to background script:", error);
         // Set error status in storage for popup

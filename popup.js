@@ -2,13 +2,12 @@
 // This script runs when the extension popup is opened and displays sustainability data.
 // It uses chrome.storage.onChanged to react to real-time status updates from the background script.
 
-// --- Diagnostic Check (kept from your last version) ---
+// --- Diagnostic Check ---
 if (typeof document === 'undefined') {
     console.error("CRITICAL ERROR: 'document' is not defined. This script is running in an unexpected environment (e.g., a service worker).");
     throw new Error("'document' object not found. Script cannot proceed.");
 }
 // --- End Diagnostic Check ---
-
 
 // Get references to all main display sections from popup.html
 const loadingDiv = document.getElementById('loading');
@@ -24,6 +23,9 @@ const initialWelcomeMessageDiv = document.getElementById('initial-welcome-messag
 const productTitleDisplay = document.getElementById('productTitleDisplay');
 const brandNameDisplay = document.getElementById('brandNameDisplay');
 const sustainabilityResultsDisplay = document.getElementById('sustainabilityResultsDisplay');
+
+// Toggle button elements
+const toggleExtensionCheckbox = document.getElementById('toggleExtension');
 
 
 // Helper to hide all main display sections/messages
@@ -44,18 +46,22 @@ async function renderPopupUI() {
     try {
         // Retrieve data from chrome.storage.local
         const storedData = await chrome.storage.local.get([
-            'analysisStatus',     // 'loading', 'success', 'error', 'not-ecommerce-domain', 'no-main-product'
-            'errorMessage',       // Any error message from analysis
-            'hasMainProduct',     // Boolean indicating if a product was found
-            'productTitle',       // Product title
-            'brandName',          // Brand name
-            'sustainabilityData', // Main sustainability object (scores, explanations)
-            'justifyingLinks',    // Array of links
-            'alternativeProducts' // Array of alternatives
+            'analysisStatus',
+            'errorMessage',
+            'hasMainProduct',
+            'productTitle',
+            'brandName',
+            'sustainabilityData',
+            'justifyingLinks',
+            'alternativeProducts',
+            'extensionEnabled' // Get the extension enabled state
         ]);
         console.log("Popup: Re-rendering UI. Current stored data:", storedData);
 
         hideAllSections(); // Start by hiding everything
+
+        // Set the toggle button's state
+        toggleExtensionCheckbox.checked = storedData.extensionEnabled !== false; // Default to true if not set
 
         // Determine which section to show based on analysisStatus
         if (storedData.analysisStatus === 'loading') {
@@ -73,7 +79,11 @@ async function renderPopupUI() {
         } else if (storedData.analysisStatus === 'success' && storedData.hasMainProduct && storedData.sustainabilityData) {
             resultsDiv.classList.remove('hidden'); // Show the results container
             displaySustainabilityResults(storedData); // Populate the results container with all data
-        } else {
+        } else if (storedData.analysisStatus === 'disabled') { // New status for when extension is explicitly off
+            initialWelcomeMessageDiv.classList.remove('hidden');
+            initialWelcomeMessageDiv.querySelector('p').textContent = "Eco-Sense is currently turned OFF. Toggle the switch above to enable analysis.";
+        }
+        else {
             // Default or uninitialized state: show the welcome message
             initialWelcomeMessageDiv.classList.remove('hidden');
         }
@@ -193,11 +203,42 @@ chrome.storage.onChanged.addListener((changes, areaName) => {
         changes.hasMainProduct ||
         changes.productTitle ||
         changes.brandName ||
-        changes.sustainabilityData || // Check for changes to the main data object
+        changes.sustainabilityData ||
         changes.justifyingLinks ||
-        changes.alternativeProducts
+        changes.alternativeProducts ||
+        changes.extensionEnabled // Listen for toggle changes too
     )) {
         console.log("Popup: Storage changed, re-rendering UI.");
         renderPopupUI();
+    }
+});
+
+// Event listener for the toggle button
+toggleExtensionCheckbox.addEventListener('change', async (event) => {
+    const isChecked = event.target.checked;
+    await chrome.storage.local.set({ extensionEnabled: isChecked });
+    console.log(`Extension enabled state set to: ${isChecked}`);
+
+    // If turned off, update status in storage to reflect disabled state in popup
+    if (!isChecked) {
+        await chrome.storage.local.set({
+            analysisStatus: 'disabled',
+            errorMessage: "Extension is temporarily off."
+        });
+        // Also inform content script immediately if it's active
+        const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+        if (tab && tab.id) {
+            chrome.tabs.sendMessage(tab.id, { action: "updateToast", status: "info", message: "Eco-Sense: Extension is OFF." });
+        }
+    } else {
+        // If turned on, trigger re-analysis of the current page
+        // This will update the status to 'loading' etc.
+        const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+        if (tab && tab.id) {
+            chrome.scripting.executeScript({
+                target: { tabId: tab.id },
+                files: ['content.js'] // Re-inject content.js to trigger initiatePageAnalysis
+            });
+        }
     }
 });
