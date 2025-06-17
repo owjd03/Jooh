@@ -1,5 +1,5 @@
 # Jooh
-we are team Joohfeed for lifehack 2025
+we are team Joohfeed for lifehack 2025 <br/>
 
 
 **Installation (Windows)**
