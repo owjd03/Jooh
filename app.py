@@ -158,17 +158,17 @@ def analyze_product_page():
     "alternativeProducts": [
         {{
         "name": "<Alternative Product Name>",
-        "estimatedScore": <0-10>,
+        "estimatedScore": <Environmental score from 0-10>,
         "reason": "<1 sentence reason why this is a more sustainable alternative>"
         }},
         {{
         "name": "<Alternative Product Name>",
-        "estimatedScore": <0-10>,
+        "estimatedScore": <Environmental score from 0-10>,
         "reason": "<1 sentence reason why this is a more sustainable alternative>"
         }},
         {{
         "name": "<Alternative Product Name>",
-        "estimatedScore": <0-10>,
+        "estimatedScore": <Environmental score from 0-10>,
         "reason": "<1 sentence reason why this is a more sustainable alternative>"
         }}
     ]
