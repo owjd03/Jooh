@@ -1,6 +1,6 @@
 # Jooh
-we are team Joohfeed for lifehack 2025 <br/>
-br/>
+we are team Joohfeed for lifehack 2025
+
 
 **Installation (Windows)**
 1. add `GEMINI_API_KEY="<YOUR_API_KEY>"` in .env file in the root directory.
@@ -20,7 +20,7 @@ pip install -r requirements.txt
 python app.py
 ```
 This starts our Flask server, which handles requests from the Chrome extension, processes product URLs, and returns sustainability scores along with supporting data.
-br/>
+
 
 **Installation (Mac)**
 1. add `GEMINI_API_KEY="<YOUR_API_KEY>"` in .env file in the root directory.
@@ -40,11 +40,11 @@ pip install -r requirements.txt
 python app.py
 ```
 This starts our Flask server, which handles requests from the Chrome extension, processes product URLs, and returns sustainability scores along with supporting data.
-br/>
+
 
 **Video sample:**
 
-br/>
+
 
 **Video transcript:**
 
