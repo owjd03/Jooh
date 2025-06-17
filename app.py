@@ -21,7 +21,7 @@ model_combined_analysis = genai.GenerativeModel(
     model_name="gemini-2.0-flash", # Use a fast model
     generation_config={
         "response_mime_type": "application/json",
-        # "temperature": 0.1, # Use low temperature for consistent, factual responses
+        "temperature": 0.1, # Use low temperature for consistent, factual responses
         "response_schema": {
             "type": "OBJECT",
             "properties": {
