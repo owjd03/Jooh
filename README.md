@@ -1,6 +1,7 @@
 # Jooh
 we are team Joohfeed for lifehack 2025
 
+
 **Installation (Windows)**
 1. add `GEMINI_API_KEY="<YOUR_API_KEY>"` in .env file in the root directory.
 
@@ -19,6 +20,7 @@ pip install -r requirements.txt
 python app.py
 ```
 This starts our Flask server, which handles requests from the Chrome extension, processes product URLs, and returns sustainability scores along with supporting data.
+
 
 **Installation (Mac)**
 1. add `GEMINI_API_KEY="<YOUR_API_KEY>"` in .env file in the root directory.
@@ -39,10 +41,13 @@ python app.py
 ```
 This starts our Flask server, which handles requests from the Chrome extension, processes product URLs, and returns sustainability scores along with supporting data.
 
+
 **Video sample:**
 
 
+
 **Video transcript:**
+
 Hello! We are Team Joohfeed, and I'm Teck Wee.
 Today, I'll be showcasing our product — Jooh, a Chrome extension designed to make sustainable shopping easier and more transparent.
 
