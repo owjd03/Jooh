@@ -35,7 +35,7 @@ python app.py
 Video sample:
 
 
-Video transcript
+Video transcript:
 Hello! We are Team Joohfeed, and I'm Teck Wee.
 Today, I'll be showcasing our product — Jooh, a Chrome extension designed to make sustainable shopping easier and more transparent.
 
