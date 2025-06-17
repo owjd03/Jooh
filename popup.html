@@ -3,6 +3,7 @@
 <head>
     <title>Eco-Sense Insights</title>
     <style>
+        /* All popup-specific styles are here */
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap');
         body {
             font-family: 'Inter', sans-serif;
@@ -101,6 +102,62 @@
             -ms-transform: translateX(20px);
             transform: translateX(20px);
         }
+
+        /* Score Meter/Progress Bar Styling */
+        .eco-score-meter-container {
+            margin: 20px 0; /* More spacing around the meter */
+            text-align: center;
+            display: flex; /* Use flex to align bar and phrase */
+            flex-direction: column; /* Stack them vertically */
+            align-items: center; /* Center horizontally */
+            padding: 10px; /* Internal padding */
+            border-radius: 10px;
+            background-color: #f0f0f0; /* Light background for the container */
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .eco-score-meter-bar {
+            width: 90%; /* Width of the entire meter bar */
+            height: 28px; /* Height of the bar */
+            background-color: #e0e0e0; /* Background of the empty bar */
+            border-radius: 14px; /* More rounded corners for a sleek look */
+            margin-bottom: 12px; /* Space between bar and phrase */
+            overflow: hidden; /* Ensures fill stays within rounded corners */
+            box-shadow: inset 0 1px 3px rgba(0,0,0,0.2);
+        }
+
+        .eco-score-meter-fill {
+            height: 100%;
+            width: 0%; /* Initial width, will be set by JS */
+            border-radius: 14px; /* Inherit parent border-radius */
+            transition: width 0.8s ease-in-out, background-color 0.8s ease-in-out; /* Smooth transitions */
+            display: flex; /* To center text inside if needed, though phrase is separate */
+            align-items: center;
+            justify-content: center;
+            color: white; /* Text color for numbers or direct indicators inside bar */
+            font-weight: bold;
+        }
+
+        /* Color classes for the fill */
+        .meter-fill-green { background-color: #4CAF50; } /* Green */
+        .meter-fill-light-green { background-color: #8BC34A; } /* Lighter green */
+        .meter-fill-yellow { background-color: #FFEB3B; } /* Yellow */
+        .meter-fill-amber { background-color: #FFC107; } /* Orange/Amber */
+        .meter-fill-red { background-color: #F44336; } /* Red */
+
+
+        .eco-score-phrase {
+            font-size: 1.25em; /* Slightly larger for prominence */
+            font-weight: bold;
+            color: black; /* Changed to white for better contrast on colored backgrounds */
+            text-shadow: 0 0 3px rgba(255,255,255,0.5); /* Stronger shadow for readability */
+        }
+        /* Adjust phrase text color for light backgrounds if needed */
+        .eco-score-phrase.text-dark {
+            color: #333; /* Keep dark for yellow/amber */
+            text-shadow: none; /* No shadow needed */
+        }
+
 
         /* Results styling */
         .eco-sense-section {
@@ -238,6 +295,13 @@
             <div class="eco-sense-product-info">
                 <h3 id="productTitleDisplay"></h3>
                 <p id="brandNameDisplay"></p>
+            </div>
+            <!-- New Score Meter Display -->
+            <div class="eco-score-meter-container">
+                <div id="ecoScoreMeterBar" class="eco-score-meter-bar">
+                    <div id="ecoScoreMeterFill" class="eco-score-meter-fill"></div>
+                </div>
+                <div id="scorePhraseDisplay" class="eco-score-phrase"></div>
             </div>
             <!-- Sustainability results will be injected here by displaySustainabilityResults -->
             <div id="sustainabilityResultsDisplay"></div>

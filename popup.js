@@ -22,6 +22,8 @@ const initialWelcomeMessageDiv = document.getElementById('initial-welcome-messag
 // Elements within the resultsDiv that will display product info
 const productTitleDisplay = document.getElementById('productTitleDisplay');
 const brandNameDisplay = document.getElementById('brandNameDisplay');
+const scorePhraseDisplay = document.getElementById('scorePhraseDisplay'); // Element for the score phrase
+const ecoScoreMeterFill = document.getElementById('ecoScoreMeterFill'); // New element for the meter fill
 const sustainabilityResultsDisplay = document.getElementById('sustainabilityResultsDisplay');
 
 // Toggle button elements
@@ -97,6 +99,38 @@ async function renderPopupUI() {
 }
 
 /**
+ * Determines a short phrase and meter class based on the overall sustainability score (0-10 scale).
+ * @param {number} score - The overall sustainability score.
+ * @returns {Object} An object containing the phrase and a corresponding CSS class for the meter fill.
+ */
+function getScoreInfo(score) {
+    let phrase = "";
+    let className = ""; // For the meter fill
+    let textClassName = ""; // To adjust text color if background is light
+
+    if (score >= 9) {
+        phrase = "Planet's Best Friend!";
+        className = "meter-fill-green";
+    } else if (score >= 7) {
+        phrase = "Gentle on the Earth";
+        className = "meter-fill-light-green";
+    } else if (score >= 5) {
+        phrase = "Eco-Conscious Choice";
+        className = "meter-fill-yellow";
+        textClassName = "text-dark"; // For better contrast on yellow
+    } else if (score >= 3) {
+        phrase = "Eco Effort Needed";
+        className = "meter-fill-amber";
+        textClassName = "text-dark"; // For better contrast on amber
+    } else { // 0-2
+        phrase = "Heavy impact Alert!";
+        className = "meter-fill-red";
+    }
+    return { phrase, className, textClassName };
+}
+
+
+/**
  * Displays the sustainability results in the popup UI.
  * This function now expects the entire `data` object from storage directly.
  * @param {Object} data - The comprehensive data from storage including product info, scores, links, alternatives.
@@ -105,6 +139,21 @@ function displaySustainabilityResults(data) {
     // Populate product title and brand
     productTitleDisplay.textContent = data.productTitle || 'Product Name Not Available';
     brandNameDisplay.textContent = data.brandName ? `by ${data.brandName}` : '';
+
+    // Set the score meter and phrase display
+    const overallScore = data.sustainabilityData.overallScore;
+    const { phrase, className, textClassName } = getScoreInfo(overallScore);
+
+    // Update meter fill - reset width to 0 and force reflow to ensure transition plays
+    ecoScoreMeterFill.style.width = '0%';
+    void ecoScoreMeterFill.offsetWidth; // Force reflow
+    ecoScoreMeterFill.style.width = `${overallScore * 10}%`; // Score is 0-10, so multiply by 10 for percentage
+    ecoScoreMeterFill.className = 'eco-score-meter-fill ' + className; // Apply color class
+
+    // Update score phrase
+    scorePhraseDisplay.textContent = phrase;
+    scorePhraseDisplay.className = 'eco-score-phrase ' + textClassName; // Apply text color class
+
 
     sustainabilityResultsDisplay.innerHTML = ''; // Clear previous content
 
@@ -120,7 +169,7 @@ function displaySustainabilityResults(data) {
     // Overall Score
     sustainabilityResultsDisplay.innerHTML += `
         <div class="eco-sense-section eco-sense-overall-score">
-            <h3>Overall Sustainability Score: <span style="color: ${scoreColor(data.sustainabilityData.overallScore)};">${data.sustainabilityData.overallScore}/10</span></h3>
+            <h3>Overall Sustainability Score: <span style="color: ${scoreColor(overallScore)};">${overallScore}/10</span></h3>
             <p>${data.sustainabilityData.overallExplanation}</p>
         </div>
     `;
@@ -235,9 +284,11 @@ toggleExtensionCheckbox.addEventListener('change', async (event) => {
         // This will update the status to 'loading' etc.
         const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
         if (tab && tab.id) {
+            // Re-inject content.js to trigger initiatePageAnalysis.
+            // This is the cleanest way to restart analysis on the current tab.
             chrome.scripting.executeScript({
                 target: { tabId: tab.id },
-                files: ['content.js'] // Re-inject content.js to trigger initiatePageAnalysis
+                files: ['content.js']
             });
         }
     }
