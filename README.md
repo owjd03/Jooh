@@ -43,7 +43,7 @@ This starts our Flask server, which handles requests from the Chrome extension, 
 
 
 **Video sample:**
-
+https://www.youtube.com/watch?v=ipgdQhm5-Rc
 
 
 **Video transcript:**
